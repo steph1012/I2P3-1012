@@ -12,56 +12,117 @@
  * 
  * @return int 
  */
+// int State::evaluate() {
+//     /*[TODO]*/
+//     int playerScore = 0;
+//     int opponentScore = 0;
+//     // Evaluate player's score
+//     for (int i = 0; i < BOARD_H; i++) {
+//         for (int j = 0; j < BOARD_W; j++) {
+//             int piece = this->board.board[this->player][i][j];
+//             if (piece == 1) {  // Pawn
+//                 playerScore += 2;
+//             } else if (piece == 2) {  // Rook
+//                 playerScore += 6;
+//             } else if (piece == 3) {  // Knight
+//                 playerScore += 7;
+//             } else if (piece == 4) {  // Bishop
+//                 playerScore += 8;
+//             } else if (piece == 5) {  // Queen
+//                 playerScore += 20;
+//             }
+//         }
+//     }
+//     // Evaluate opponent's score
+//     for (int i = 0; i < BOARD_H; i++) {
+//         for (int j = 0; j < BOARD_W; j++) {
+//             int piece = this->board.board[1 - this->player][i][j];
+//             if (piece == 1) {  // Pawn
+//                 opponentScore += 2;
+//             } else if (piece == 2) {  // Rook
+//                 opponentScore += 6;
+//             } else if (piece == 3) {  // Knight
+//                 opponentScore += 7;
+//             } else if (piece == 4) {  // Bishop
+//                 opponentScore += 8;
+//             } else if (piece == 5) {  // Queen
+//                 opponentScore += 20;
+//             }
+//         }
+//     }
+//     int utilityValue = playerScore - opponentScore;
+//     return utilityValue;
+// }
+
 int State::evaluate() {
-    /*[TODO]*/
-    // Check if the game has already ended
-    if (game_state == WIN) {
-        // Player 1 (White) wins
-        if (player == 0) {
-            return 1;
-        }
-        // Player 2 (Black) wins
-        else {
-            return -1;
-        }
+  const int pieceValues[7] = {0, 2, 6, 7, 8, 20, 0};  // Piece values: 0-empty, 1-pawn, 2-rook, 3-knight, 4-bishop, 5-queen, 6-king
+
+  int score = 0;
+  auto self_board = this->board.board[this->player];
+  auto oppn_board = this->board.board[1 - this->player];
+  int self_kingsPosition,oppn_kingsPosition;
+  // Evaluate self pieces
+  for (int i = 0; i < BOARD_H; i++) {
+    for (int j = 0; j < BOARD_W; j++) {
+      int piece = self_board[i][j];
+      if (piece == 6)
+        self_kingsPosition = j;
+      score += pieceValues[piece];
     }
-    else if (game_state == DRAW) {
-        return 0;
+  }
+
+  // Evaluate opponent pieces
+  for (int i = 0; i < BOARD_H; i++) {
+    for (int j = 0; j < BOARD_W; j++) {
+      int piece = oppn_board[i][j];
+      if (piece == 6)
+        oppn_kingsPosition = j;
+      score -= pieceValues[piece];
     }
+  }
+  
+  if (this->player==0){
+    if (self_kingsPosition==4 && oppn_kingsPosition!=0)
+      score+=6;
+  }else if (this->player==1){
+    if (self_kingsPosition==0 && oppn_kingsPosition!=4)
+      score+=6;
+  }
+  // Add positional bonuses
+  // score += positionalBonuses[self_board[3][0]];  // Bonus for having the king in the center
+  // score += positionalBonuses[self_board[3][4]];  // Bonus for having the king in the center
 
-    // Calculate the total material for both players
-    int whiteMaterial = calculateMaterial(0);
-    int blackMaterial = calculateMaterial(1);
-
-    // Calculate the material ratio between the two players
-    double materialRatio = (double)(whiteMaterial) / (double)(blackMaterial);
-
-    // Apply a sigmoid function to the material ratio to get a value between 0 and 1
-    double sigmoidValue = 1.0 / (1.0 + exp(-materialRatio));
-
-    // Scale the sigmoid value to the range [-0.5, 0.5]
-    double scaledValue = (sigmoidValue - 0.5) * 2.0;
-
-    // Return the scaled value as the evaluation result
-    return scaledValue;
+  return score;
 }
 
-int State::calculateMaterial(int player) {
-    int material = 0;
-    for (int i = 0; i < BOARD_H; ++i) {
-        for (int j = 0; j < BOARD_W; ++j) {
-            int piece = board.board[player][i][j];
-            // Assuming each piece has a specific value (e.g., pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9)
-            material += getPieceValue(piece);
-        }
-    }
-    return material;
-}
 
-int State::getPieceValue(int piece) {
-    // Assign values to the pieces
-    const int pieceValues[] = {0, 1, 5, 3, 3, 9, 0};
-    return pieceValues[piece];
+int State::minimax(State* state, int depth, bool maxmizingPlayer){
+  if (depth ==0){
+    return evaluate();
+  }
+  if (maxmizingPlayer){
+    int maxEval = std::numeric_limits<int>::min();
+        // Generate all possible moves for the maximizing player
+        std::vector<Move> possibleMoves = state->legal_actions;
+        for (const auto& move : possibleMoves) {
+            State* next_state = state->next_state(move);
+            int eval = minimax(next_state, depth + 1, false);
+            maxEval = std::max(maxEval, eval);
+            delete next_state;
+        }
+        return maxEval;
+  } else {
+    int minEval = std::numeric_limits<int>::max();
+    // Generate all possible moves for the minimizing player
+    std::vector<Move> possibleMoves = state->legal_actions;
+    for (const auto& move : possibleMoves) {
+      State* next_state = state->next_state(move);
+      int eval = minimax(next_state, depth + 1, true);
+      minEval = std::min(minEval, eval);
+      delete next_state;
+    }
+    return minEval;
+  }
 }
 
 
