@@ -13,6 +13,7 @@
  * @return int 
  */
 int State::evaluate() {
+    /*[TODO]*/
     // Check if the game has already ended
     if (game_state == WIN) {
         // Player 1 (White) wins
