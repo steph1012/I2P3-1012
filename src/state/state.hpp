@@ -54,8 +54,9 @@ class State{
     State(Board board, int player): board(board), player(player){};
     
     int evaluate();
-    int calculateMaterial(int player);
-    int getPieceValue(int piece);
+    // int calculateMaterial(int player);
+    // int getPieceValue(int piece);
+    int minimax(State* state, int depth, bool maxmizingPlayer);
     State* next_state(Move move);
     void get_legal_actions();
     std::string encode_output();
