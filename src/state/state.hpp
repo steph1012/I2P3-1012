@@ -54,6 +54,8 @@ class State{
     State(Board board, int player): board(board), player(player){};
     
     int evaluate();
+    int calculateMaterial(int player);
+    int getPieceValue(int piece);
     State* next_state(Move move);
     void get_legal_actions();
     std::string encode_output();

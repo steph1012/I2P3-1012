@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdint>
+#include <math.h>
 
 #include "./state.hpp"
 #include "../config.hpp"
@@ -11,10 +12,57 @@
  * 
  * @return int 
  */
-int State::evaluate(){
-  // [TODO] design your own evaluation function
-  return 0;
+int State::evaluate() {
+    // Check if the game has already ended
+    if (game_state == WIN) {
+        // Player 1 (White) wins
+        if (player == 0) {
+            return 1;
+        }
+        // Player 2 (Black) wins
+        else {
+            return -1;
+        }
+    }
+    else if (game_state == DRAW) {
+        return 0;
+    }
+
+    // Calculate the total material for both players
+    int whiteMaterial = calculateMaterial(0);
+    int blackMaterial = calculateMaterial(1);
+
+    // Calculate the material ratio between the two players
+    double materialRatio = (double)(whiteMaterial) / (double)(blackMaterial);
+
+    // Apply a sigmoid function to the material ratio to get a value between 0 and 1
+    double sigmoidValue = 1.0 / (1.0 + exp(-materialRatio));
+
+    // Scale the sigmoid value to the range [-0.5, 0.5]
+    double scaledValue = (sigmoidValue - 0.5) * 2.0;
+
+    // Return the scaled value as the evaluation result
+    return scaledValue;
 }
+
+int State::calculateMaterial(int player) {
+    int material = 0;
+    for (int i = 0; i < BOARD_H; ++i) {
+        for (int j = 0; j < BOARD_W; ++j) {
+            int piece = board.board[player][i][j];
+            // Assuming each piece has a specific value (e.g., pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9)
+            material += getPieceValue(piece);
+        }
+    }
+    return material;
+}
+
+int State::getPieceValue(int piece) {
+    // Assign values to the pieces
+    const int pieceValues[] = {0, 1, 5, 3, 3, 9, 0};
+    return pieceValues[piece];
+}
+
 
 
 /**
