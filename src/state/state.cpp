@@ -7,88 +7,55 @@
 #include "../config.hpp"
 
 
+int State::evaluatePiece(int piece) {
+  const int pieceValues[7] = {0, 2, 6, 7, 8, 20, 0};  // Piece values: 0-empty, 1-pawn, 2-rook, 3-knight, 4-bishop, 5-queen, 6-king
+  return pieceValues[piece];
+}
+
 /**
  * @brief evaluate the state
  * 
  * @return int 
  */
 int State::evaluate() {
-  const int pieceValues[7] = {0, 2, 6, 7, 8, 20, 0};  // Piece values: 0-empty, 1-pawn, 2-rook, 3-knight, 4-bishop, 5-queen, 6-king
-
   int score = 0;
   auto self_board = this->board.board[this->player];
   auto oppn_board = this->board.board[1 - this->player];
-  int self_kingsPosition,oppn_kingsPosition;
+  int self_kingsPosition, oppn_kingsPosition;
+
   // Evaluate self pieces
   for (int i = 0; i < BOARD_H; i++) {
     for (int j = 0; j < BOARD_W; j++) {
       int piece = self_board[i][j];
       if (piece == 6)
         self_kingsPosition = j;
-      score += pieceValues[piece];
+      score += evaluatePiece(piece);
     }
   }
-
   // Evaluate opponent pieces
   for (int i = 0; i < BOARD_H; i++) {
     for (int j = 0; j < BOARD_W; j++) {
       int piece = oppn_board[i][j];
       if (piece == 6)
         oppn_kingsPosition = j;
-      score -= pieceValues[piece];
+      score -= evaluatePiece(piece);
     }
   }
   
-  if (this->player==0){
-    if (self_kingsPosition==4 && oppn_kingsPosition!=0)
-      score+=6;
-  }else if (this->player==1){
-    if (self_kingsPosition==0 && oppn_kingsPosition!=4)
-      score+=6;
+  if (this->player == 0) {
+    if (self_kingsPosition == 4 && oppn_kingsPosition != 0)
+      score += 6;
+  } else if (this->player == 1) {
+    if (self_kingsPosition == 0 && oppn_kingsPosition != 4)
+      score += 6;
   }
-  // Add positional bonuses
-  // score += positionalBonuses[self_board[3][0]];  // Bonus for having the king in the center
-  // score += positionalBonuses[self_board[3][4]];  // Bonus for having the king in the center
 
   return score;
 }
 
-
-int State::minimax(State* state, int depth, bool maxmizingPlayer){
-  if (depth ==0){
-    return evaluate();
-  }
-  if (maxmizingPlayer){
-    int maxEval = std::numeric_limits<int>::min();
-        // Generate all possible moves for the maximizing player
-        std::vector<Move> possibleMoves = state->legal_actions;
-        for (const auto& move : possibleMoves) {
-            State* next_state = state->next_state(move);
-            int eval = minimax(next_state, depth + 1, false);
-            maxEval = std::max(maxEval, eval);
-            delete next_state;
-        }
-        return maxEval;
-  } else {
-    int minEval = std::numeric_limits<int>::max();
-    // Generate all possible moves for the minimizing player
-    std::vector<Move> possibleMoves = state->legal_actions;
-    for (const auto& move : possibleMoves) {
-      State* next_state = state->next_state(move);
-      int eval = minimax(next_state, depth + 1, true);
-      minEval = std::min(minEval, eval);
-      delete next_state;
-    }
-    return minEval;
-  }
-}
-
-
-
-
-int State::alphabeta(State* state, int depth, int alpha, int beta, bool maximizingPlayer) {
+int State::minimax(State* state, int depth, bool maximizingPlayer) {
   if (depth == 0) {
-    return state->evaluate();
+    return evaluate();
   }
 
   if (maximizingPlayer) {
@@ -97,17 +64,8 @@ int State::alphabeta(State* state, int depth, int alpha, int beta, bool maximizi
 
     for (const auto& move : possibleMoves) {
       State* next_state = state->next_state(move);
-      int eval = alphabeta(next_state, depth - 1, alpha, beta, false);
+      int eval = minimax(next_state, depth - 1, false);
       maxEval = std::max(maxEval, eval);
-      alpha = std::max(alpha, eval);
-
-      // Perform alpha-beta pruning if the current node's value
-      // exceeds the beta value of the parent node.
-      if (beta <= alpha) {
-        delete next_state;
-        break;
-      }
-
       delete next_state;
     }
 
@@ -118,12 +76,66 @@ int State::alphabeta(State* state, int depth, int alpha, int beta, bool maximizi
 
     for (const auto& move : possibleMoves) {
       State* next_state = state->next_state(move);
-      int eval = alphabeta(next_state, depth - 1, alpha, beta, true);
+      int eval = minimax(next_state, depth - 1, true);
       minEval = std::min(minEval, eval);
-      beta = std::min(beta, eval);
+      delete next_state;
+    }
 
-      // Perform alpha-beta pruning if the current node's value
-      // falls below the alpha value of the parent node.
+    return minEval;
+  }
+}
+
+int State::sortMoves(State* state, std::vector<Move>& moves) {
+  // Sort moves based on capturing moves first
+  std::sort(moves.begin(), moves.end(), [state](const Move& a, const Move& b) {
+    bool isCaptureA = state->isCaptureMove(a);
+    bool isCaptureB = state->isCaptureMove(b);
+
+    if (isCaptureA && !isCaptureB) {
+      return true;
+    } else if (!isCaptureA && isCaptureB) {
+      return false;
+    }
+
+    // If both moves are capturing moves or non-capturing moves, you can use other criteria
+    // to further sort the moves, such as evaluation scores, piece mobility, or history scores
+
+    // Add your additional sorting criteria here
+
+    // If no specific sorting criteria, maintain the original order
+    return false;
+  });
+
+  return moves.size();
+}
+
+bool State::isCaptureMove(const Move& move) {
+  Point to = move.second;
+  auto oppn_board = this->board.board[1 - this->player];
+  return oppn_board[to.first][to.second] != 0;
+}
+
+
+int State::alphabeta(State* state, int depth, int alpha, int beta, bool maximizingPlayer) {
+  if (depth == 0) {
+    return state->evaluate();
+  }
+
+  int transpositionScore;
+  if (retrieveTransposition(depth, transpositionScore)) {
+    return transpositionScore;
+  }
+
+  if (maximizingPlayer) {
+    int maxEval = std::numeric_limits<int>::min();
+    std::vector<Move> possibleMoves = state->legal_actions;
+    sortMoves(state, possibleMoves);
+
+    for (const auto& move : possibleMoves) {
+      State* next_state = state->next_state(move);
+      int eval = alphabeta(next_state, depth - 1, alpha, beta, false);
+      maxEval = std::max(maxEval, eval);
+      alpha = std::max(alpha, eval);
       if (beta <= alpha) {
         delete next_state;
         break;
@@ -132,8 +144,44 @@ int State::alphabeta(State* state, int depth, int alpha, int beta, bool maximizi
       delete next_state;
     }
 
+    storeTransposition(depth, maxEval);
+    return maxEval;
+  } else {
+    int minEval = std::numeric_limits<int>::max();
+    std::vector<Move> possibleMoves = state->legal_actions;
+    sortMoves(state, possibleMoves);
+
+    for (const auto& move : possibleMoves) {
+      State* next_state = state->next_state(move);
+      int eval = alphabeta(next_state, depth - 1, alpha, beta, true);
+      minEval = std::min(minEval, eval);
+      beta = std::min(beta, eval);
+      if (beta <= alpha) {
+        delete next_state;
+        break;
+      }
+
+      delete next_state;
+    }
+
+    storeTransposition(depth, minEval);
     return minEval;
   }
+}
+
+void State::storeTransposition(int depth, int score) {
+  uint64_t hash = std::hash<std::string>{}(encode_state());
+  transpositionTable[hash] = std::make_pair(depth, score);
+}
+
+bool State::retrieveTransposition(int depth, int& score) {
+  uint64_t hash = std::hash<std::string>{}(encode_state());
+  auto it = transpositionTable.find(hash);
+  if (it != transpositionTable.end() && it->second.first >= depth) {
+    score = it->second.second;
+    return true;
+  }
+  return false;
 }
 
 

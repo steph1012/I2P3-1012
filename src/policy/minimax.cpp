@@ -26,7 +26,7 @@ Move Minimax::get_move(State *state, int depth){
     State* nextState = state->next_state(move);
     //how to make you strong
     // Call the minimax function to evaluate the new state
-    int score = state->minimax(nextState, depth-1, false);  // Assuming minimax is implemented
+    int score = state->minimax(nextState, depth, false);  // Assuming minimax is implemented
 
     // Check if the current move has a higher score than the best move
     if (score > bestScore) {

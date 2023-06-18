@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <vector>
 #include <utility>
+#include <unordered_map>
 
 #include "../config.hpp"
 
@@ -58,10 +59,16 @@ class State{
     // int getPieceValue(int piece);
     int minimax(State* state, int depth, bool maxmizingPlayer);
     int alphabeta(State* state, int depth, int alpha, int beta, bool maximizingPlayer);
+    int sortMoves(State* state, std::vector<Move>& moves);
+    int evaluatePiece(int piece);
+    bool isCaptureMove(const Move& move);
+    void storeTransposition(int depth, int score);
+    bool retrieveTransposition(int depth, int& score);
     State* next_state(Move move);
     void get_legal_actions();
     std::string encode_output();
     std::string encode_state();
+    std::unordered_map<uint64_t, std::pair<int, int>> transpositionTable;
 };
 
 #endif
