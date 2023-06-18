@@ -12,48 +12,6 @@
  * 
  * @return int 
  */
-// int State::evaluate() {
-//     /*[TODO]*/
-//     int playerScore = 0;
-//     int opponentScore = 0;
-//     // Evaluate player's score
-//     for (int i = 0; i < BOARD_H; i++) {
-//         for (int j = 0; j < BOARD_W; j++) {
-//             int piece = this->board.board[this->player][i][j];
-//             if (piece == 1) {  // Pawn
-//                 playerScore += 2;
-//             } else if (piece == 2) {  // Rook
-//                 playerScore += 6;
-//             } else if (piece == 3) {  // Knight
-//                 playerScore += 7;
-//             } else if (piece == 4) {  // Bishop
-//                 playerScore += 8;
-//             } else if (piece == 5) {  // Queen
-//                 playerScore += 20;
-//             }
-//         }
-//     }
-//     // Evaluate opponent's score
-//     for (int i = 0; i < BOARD_H; i++) {
-//         for (int j = 0; j < BOARD_W; j++) {
-//             int piece = this->board.board[1 - this->player][i][j];
-//             if (piece == 1) {  // Pawn
-//                 opponentScore += 2;
-//             } else if (piece == 2) {  // Rook
-//                 opponentScore += 6;
-//             } else if (piece == 3) {  // Knight
-//                 opponentScore += 7;
-//             } else if (piece == 4) {  // Bishop
-//                 opponentScore += 8;
-//             } else if (piece == 5) {  // Queen
-//                 opponentScore += 20;
-//             }
-//         }
-//     }
-//     int utilityValue = playerScore - opponentScore;
-//     return utilityValue;
-// }
-
 int State::evaluate() {
   const int pieceValues[7] = {0, 2, 6, 7, 8, 20, 0};  // Piece values: 0-empty, 1-pawn, 2-rook, 3-knight, 4-bishop, 5-queen, 6-king
 
@@ -126,29 +84,27 @@ int State::minimax(State* state, int depth, bool maxmizingPlayer){
 }
 
 
+
+
 int State::alphabeta(State* state, int depth, int alpha, int beta, bool maximizingPlayer) {
   if (depth == 0) {
-    return evaluate();
+    return state->evaluate();
   }
-  
+
   if (maximizingPlayer) {
     int maxEval = std::numeric_limits<int>::min();
     std::vector<Move> possibleMoves = state->legal_actions;
 
-    // Sort the possible moves based on a move ordering heuristic
-    // (e.g., capturing moves first, moves with high evaluation score, etc.)
-    // This helps in pruning more branches early in the search.
-    sortMoves(possibleMoves);
-
     for (const auto& move : possibleMoves) {
       State* next_state = state->next_state(move);
-      int eval = minimax(next_state, depth - 1, alpha, beta, false);
+      int eval = alphabeta(next_state, depth - 1, alpha, beta, false);
       maxEval = std::max(maxEval, eval);
       alpha = std::max(alpha, eval);
 
       // Perform alpha-beta pruning if the current node's value
       // exceeds the beta value of the parent node.
       if (beta <= alpha) {
+        delete next_state;
         break;
       }
 
@@ -160,20 +116,16 @@ int State::alphabeta(State* state, int depth, int alpha, int beta, bool maximizi
     int minEval = std::numeric_limits<int>::max();
     std::vector<Move> possibleMoves = state->legal_actions;
 
-    // Sort the possible moves based on a move ordering heuristic
-    // (e.g., capturing moves first, moves with low evaluation score, etc.)
-    // This helps in pruning more branches early in the search.
-    sortMoves(possibleMoves);
-
     for (const auto& move : possibleMoves) {
       State* next_state = state->next_state(move);
-      int eval = minimax(next_state, depth - 1, alpha, beta, true);
+      int eval = alphabeta(next_state, depth - 1, alpha, beta, true);
       minEval = std::min(minEval, eval);
       beta = std::min(beta, eval);
 
       // Perform alpha-beta pruning if the current node's value
       // falls below the alpha value of the parent node.
       if (beta <= alpha) {
+        delete next_state;
         break;
       }
 
@@ -183,6 +135,7 @@ int State::alphabeta(State* state, int depth, int alpha, int beta, bool maximizi
     return minEval;
   }
 }
+
 
 
 /**
