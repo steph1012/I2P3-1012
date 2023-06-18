@@ -126,6 +126,64 @@ int State::minimax(State* state, int depth, bool maxmizingPlayer){
 }
 
 
+int State::alphabeta(State* state, int depth, int alpha, int beta, bool maximizingPlayer) {
+  if (depth == 0) {
+    return evaluate();
+  }
+  
+  if (maximizingPlayer) {
+    int maxEval = std::numeric_limits<int>::min();
+    std::vector<Move> possibleMoves = state->legal_actions;
+
+    // Sort the possible moves based on a move ordering heuristic
+    // (e.g., capturing moves first, moves with high evaluation score, etc.)
+    // This helps in pruning more branches early in the search.
+    sortMoves(possibleMoves);
+
+    for (const auto& move : possibleMoves) {
+      State* next_state = state->next_state(move);
+      int eval = minimax(next_state, depth - 1, alpha, beta, false);
+      maxEval = std::max(maxEval, eval);
+      alpha = std::max(alpha, eval);
+
+      // Perform alpha-beta pruning if the current node's value
+      // exceeds the beta value of the parent node.
+      if (beta <= alpha) {
+        break;
+      }
+
+      delete next_state;
+    }
+
+    return maxEval;
+  } else {
+    int minEval = std::numeric_limits<int>::max();
+    std::vector<Move> possibleMoves = state->legal_actions;
+
+    // Sort the possible moves based on a move ordering heuristic
+    // (e.g., capturing moves first, moves with low evaluation score, etc.)
+    // This helps in pruning more branches early in the search.
+    sortMoves(possibleMoves);
+
+    for (const auto& move : possibleMoves) {
+      State* next_state = state->next_state(move);
+      int eval = minimax(next_state, depth - 1, alpha, beta, true);
+      minEval = std::min(minEval, eval);
+      beta = std::min(beta, eval);
+
+      // Perform alpha-beta pruning if the current node's value
+      // falls below the alpha value of the parent node.
+      if (beta <= alpha) {
+        break;
+      }
+
+      delete next_state;
+    }
+
+    return minEval;
+  }
+}
+
 
 /**
  * @brief return next state after the move

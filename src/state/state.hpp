@@ -57,6 +57,7 @@ class State{
     // int calculateMaterial(int player);
     // int getPieceValue(int piece);
     int minimax(State* state, int depth, bool maxmizingPlayer);
+    int alphabeta(State* state, int depth, int alpha, int beta, bool maximizingPlayer);
     State* next_state(Move move);
     void get_legal_actions();
     std::string encode_output();

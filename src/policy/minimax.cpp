@@ -24,7 +24,7 @@ Move Minimax::get_move(State *state, int depth){
   for (const auto& move : actions) {
     // Create a new state by applying the current move
     State* nextState = state->next_state(move);
-
+    //how to make you strong
     // Call the minimax function to evaluate the new state
     int score = state->minimax(nextState, depth-1, false);  // Assuming minimax is implemented
 
