@@ -29,7 +29,7 @@ Move Alphabeta::get_move(State *state, int depth){
     State* nextState = state->next_state(move);
     //how to make you strong
     // Call the minimax function to evaluate the new state
-    depth = 4;
+    depth = 5;
     int score = state->alphabeta(nextState, depth,alpha, beta,true);;  // Assuming alphbeta is implemented
 
     // Check if the current move has a higher score than the best move

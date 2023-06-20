@@ -19,15 +19,15 @@ Move Minimax::get_move(State *state, int depth){
   auto actions = state->legal_actions;
   // Initialize variables for storing the best move and its evaluation score
   Move bestMove = actions[0];  // Start with the first move as the best move
-  int bestScore = INT_MIN;     // Start with a very low score
+  double bestScore = 0;     // Start with a very low score
   // Evaluate each move and find the move with the highest evaluation score
   for (const auto& move : actions) {
     // Create a new state by applying the current move
     State* nextState = state->next_state(move);
     //how to make you strong
     // Call the minimax function to evaluate the new state
-    depth = 3;
-    int score = state->minimax(nextState, depth, false);  // Assuming minimax is implemented
+    depth = 2;
+    double score = state->minimax(nextState, depth, false);  // Assuming minimax is implemented
 
     // Check if the current move has a higher score than the best move
     if (score > bestScore) {

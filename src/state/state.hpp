@@ -9,7 +9,6 @@
 
 #include "../config.hpp"
 
-
 typedef std::pair<size_t, size_t> Point;
 typedef std::pair<Point, Point> Move;
 class Board{
@@ -61,9 +60,12 @@ class State{
     int alphabeta(State* state, int depth, int alpha, int beta, bool maximizingPlayer);
     int sortMoves(State* state, std::vector<Move>& moves);
     int evaluatePiece(int piece);
+    int positionWeight(int piece,int x,int y,int player);
     bool isCaptureMove(const Move& move);
     void storeTransposition(int depth, int score);
     bool retrieveTransposition(int depth, int& score);
+    
+
     State* next_state(Move move);
     void get_legal_actions();
     std::string encode_output();
